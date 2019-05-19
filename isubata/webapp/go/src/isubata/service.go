@@ -99,3 +99,25 @@ func jsonifyMessage(m Message) (map[string]interface{}, error) {
 	r["content"] = m.Content
 	return r, nil
 }
+
+func createResponse(chanID, lastID int64) ([]map[string]interface{}, error) {
+	rows, err := db.Query("select m.*, u.name, u.display_name, u.avatar_icon from message m inner join user u on u.id = m.user_id where channel_id = ? and id > ? order by m.id desc limit 100", chanID, lastID)
+	if err != nil {
+		return nil, err
+	}
+	response := make([]map[string]interface{}, 0)
+	for rows.Next() {
+		var m Message
+		var u User
+		if err = rows.Scan(&m.ID, &m.ChannelID, &m.UserID, &m.Content, &m.CreatedAt, &u.Name, &u.DisplayName, &u.AvatarIcon); err != nil {
+			return nil, err
+		}
+		r := make(map[string]interface{})
+		r["id"] = m.ID
+		r["user"] = u
+		r["date"] = m.CreatedAt.Format("2006/01/02 15:04:05")
+		r["content"] = m.Content
+		response = append(response, r)
+	}
+	return response, err
+}
