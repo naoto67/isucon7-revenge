@@ -101,16 +101,16 @@ func jsonifyMessage(m Message) (map[string]interface{}, error) {
 }
 
 func createResponse(chanID, lastID int64) ([]map[string]interface{}, error) {
+	response := make([]map[string]interface{}, 0)
 	rows, err := db.Query("select m.*, u.name, u.display_name, u.avatar_icon from message m inner join user u on u.id = m.user_id where channel_id = ? and id > ? order by m.id desc limit 100", chanID, lastID)
 	if err != nil {
-		return nil, err
+		return response, err
 	}
-	response := make([]map[string]interface{}, 0)
 	for rows.Next() {
 		var m Message
 		var u User
 		if err = rows.Scan(&m.ID, &m.ChannelID, &m.UserID, &m.Content, &m.CreatedAt, &u.Name, &u.DisplayName, &u.AvatarIcon); err != nil {
-			return nil, err
+			return response, err
 		}
 		r := make(map[string]interface{})
 		r["id"] = m.ID
