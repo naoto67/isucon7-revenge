@@ -107,6 +107,7 @@ func createResponse(chanID, lastID int64) ([]map[string]interface{}, error) {
 	if err != nil {
 		return response, err
 	}
+	defer rows.Close()
 	for rows.Next() {
 		var m Message
 		var u User
