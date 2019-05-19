@@ -331,6 +331,33 @@ func getMessage(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+func newFetchUnread(c echo.Context) error {
+	userID := sessUserID(c)
+	if userID == 0 {
+		return c.NoContent(http.StatusForbidden)
+	}
+
+	resp := []map[string]interface{}{}
+	rows, err := db.Query("SELECT channel_id, COUNT(*) as cnt FROM message WHERE  id > ifnull((select message_id from haveread where user_id = ?), 0) group by channel_id", userID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var chID int64
+		var cnt int64
+		if err = rows.Scan(&chID, &cnt); err != nil {
+			return err
+		}
+		r := map[string]interface{}{
+			"channel_id": chID,
+			"unread":     cnt}
+		resp = append(resp, r)
+	}
+
+	return c.JSON(http.StatusOK, resp)
+}
+
 func fetchUnread(c echo.Context) error {
 	userID := sessUserID(c)
 	if userID == 0 {
@@ -629,7 +656,7 @@ func main() {
 	e.GET("/channel/:channel_id", getChannel)
 	e.GET("/message", newGetMessage)
 	e.POST("/message", postMessage)
-	e.GET("/fetch", fetchUnread)
+	e.GET("/fetch", newFetchUnread)
 	e.GET("/history/:channel_id", getHistory)
 
 	e.GET("/profile/:user_name", getProfile)
