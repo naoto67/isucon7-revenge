@@ -119,5 +119,11 @@ func createResponse(chanID, lastID int64) ([]map[string]interface{}, error) {
 		r["content"] = m.Content
 		response = append(response, r)
 	}
-	return response, err
+
+	reverse_response := make([]map[string]interface{}, 0)
+	size := len(response)
+	for i, _ := range response {
+		reverse_response = append(reverse_response, response[size-i])
+	}
+	return reverse_response, err
 }
