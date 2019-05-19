@@ -6,14 +6,14 @@ CREATE TABLE user (
   display_name TEXT,
   avatar_icon TEXT,
   created_at DATETIME NOT NULL,
-  KEY name_idx_on_user (name),
+  KEY name_idx_on_user (name)
 ) Engine=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE image (
   id BIGINT UNSIGNED AUTO_INCREMENT NOT NULL PRIMARY KEY,
   name VARCHAR(191),
   data LONGBLOB,
-  KEY name_idx_on_image (name),
+  KEY name_idx_on_image (name)
 ) Engine=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE channel (
@@ -40,5 +40,5 @@ CREATE TABLE haveread (
   created_at DATETIME NOT NULL,
   KEY user_id_idx_on_haveread (user_id),
   KEY channel_id_idx_on_haveread (channel_id),
-  PRIMARY KEY(user_id, channel_id),
+  PRIMARY KEY(user_id, channel_id)
 ) Engine=InnoDB DEFAULT CHARSET=utf8mb4;
