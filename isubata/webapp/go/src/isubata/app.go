@@ -345,24 +345,11 @@ func fetchUnread(c echo.Context) error {
 	resp := []map[string]interface{}{}
 
 	for _, chID := range channels {
-		lastID, err := queryHaveRead(userID, chID)
-		if err != nil {
+		var cnt int64
+		if err = db.QueryRow("SELECT COUNT(*) as cnt FROM message WHERE channel_id = ? AND id > ifnull((select message_id from haveread where user_id = ? and channel_id = ?), 0)", chID, userID, chID).Scan(&cnt); err != nil {
 			return err
 		}
 
-		var cnt int64
-		if lastID > 0 {
-			err = db.Get(&cnt,
-				"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ? AND ? < id",
-				chID, lastID)
-		} else {
-			err = db.Get(&cnt,
-				"SELECT COUNT(*) as cnt FROM message WHERE channel_id = ?",
-				chID)
-		}
-		if err != nil {
-			return err
-		}
 		r := map[string]interface{}{
 			"channel_id": chID,
 			"unread":     cnt}
