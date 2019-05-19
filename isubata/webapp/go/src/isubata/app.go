@@ -538,7 +538,10 @@ func postAddChannel(c echo.Context) error {
 	if err != nil {
 		return err
 	}
-	lastID, _ := res.LastInsertId()
+	lastID, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
 	return c.Redirect(http.StatusSeeOther,
 		fmt.Sprintf("/channel/%v", lastID))
 }
