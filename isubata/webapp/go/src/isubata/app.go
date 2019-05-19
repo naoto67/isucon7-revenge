@@ -395,30 +395,21 @@ func getHistory(c echo.Context) error {
 		return ErrBadReqeust
 	}
 
-	response := make([]map[string]interface{}, 0)
-	rows, err := db.Query("SELECT m.*, u.name, u.dispaly, u.avatar_icon FROM message m inner join user u on u.id = m.user_id WHERE channel_id = ? ORDER BY m.id DESC LIMIT ? OFFSET ?", chID, N, (page-1)*N)
+	messages := []Message{}
+	err = db.Select(&messages,
+		"SELECT * FROM message WHERE channel_id = ? ORDER BY id DESC LIMIT ? OFFSET ?",
+		chID, N, (page-1)*N)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
-	for rows.Next() {
-		var m Message
-		var u User
-		if err = rows.Scan(&m.ID, &m.ChannelID, &m.UserID, &m.Content, &m.CreatedAt, &u.Name, &u.DisplayName, &u.AvatarIcon); err != nil {
-			return err
-		}
-		r := make(map[string]interface{})
-		r["id"] = m.ID
-		r["user"] = u
-		r["date"] = m.CreatedAt.Format("2006/01/02 15:04:05")
-		r["content"] = m.Content
-		response = append(response, r)
-	}
 
 	mjson := make([]map[string]interface{}, 0)
-	size := len(response)
-	for i, _ := range response {
-		mjson = append(mjson, response[size-i-1])
+	for i := len(messages) - 1; i >= 0; i-- {
+		r, err := jsonifyMessage(messages[i])
+		if err != nil {
+			return err
+		}
+		mjson = append(mjson, r)
 	}
 
 	channels := []ChannelInfo{}
