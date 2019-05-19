@@ -29,3 +29,10 @@ type ChannelInfo struct {
 	UpdatedAt   time.Time `db:"updated_at"`
 	CreatedAt   time.Time `db:"created_at"`
 }
+
+type Response struct {
+	MessageID int64
+	User      User
+	CreatedAt time.Time
+	Content   string
+}
