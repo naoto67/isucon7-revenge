@@ -127,3 +127,9 @@ func createResponse(chanID, lastID int64) ([]map[string]interface{}, error) {
 	}
 	return reverse_response, err
 }
+
+func queryChannels() ([]int64, error) {
+	res := []int64{}
+	err := db.Select(&res, "SELECT id FROM channel")
+	return res, err
+}

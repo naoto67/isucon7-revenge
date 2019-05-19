@@ -331,12 +331,6 @@ func getMessage(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
-func queryChannels() ([]int64, error) {
-	res := []int64{}
-	err := db.Select(&res, "SELECT id FROM channel")
-	return res, err
-}
-
 func queryHaveRead(userID, chID int64) (int64, error) {
 	type HaveRead struct {
 		UserID    int64     `db:"user_id"`
