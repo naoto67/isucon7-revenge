@@ -123,7 +123,7 @@ func createResponse(chanID, lastID int64) ([]map[string]interface{}, error) {
 	reverse_response := make([]map[string]interface{}, 0)
 	size := len(response)
 	for i, _ := range response {
-		reverse_response = append(reverse_response, response[size-i])
+		reverse_response = append(reverse_response, response[size-i-1])
 	}
 	return reverse_response, err
 }
