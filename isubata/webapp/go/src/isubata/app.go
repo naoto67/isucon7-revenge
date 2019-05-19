@@ -396,7 +396,7 @@ func newGetHistory(c echo.Context) error {
 	}
 
 	response := make([]map[string]interface{}, 0)
-	rows, err := db.Query("SELECT * FROM message m inner join user u on u.id = m.user_id WHERE channel_id = ? ORDER BY m.id DESC LIMIT ? OFFSET ?", chID, N, (page-1)*N)
+	rows, err := db.Query("SELECT m.*, u.name, u.display_name, u.avatar_icon FROM message m inner join user u on u.id = m.user_id WHERE channel_id = ? ORDER BY m.id DESC LIMIT ? OFFSET ?", chID, N, (page-1)*N)
 	if err != nil {
 		return err
 	}
