@@ -359,6 +359,84 @@ func fetchUnread(c echo.Context) error {
 	return c.JSON(http.StatusOK, resp)
 }
 
+func newGetHistory(c echo.Context) error {
+	chID, err := strconv.ParseInt(c.Param("channel_id"), 10, 64)
+	if err != nil || chID <= 0 {
+		return ErrBadReqeust
+	}
+
+	user, err := ensureLogin(c)
+	if user == nil {
+		return err
+	}
+
+	var page int64
+	pageStr := c.QueryParam("page")
+	if pageStr == "" {
+		page = 1
+	} else {
+		page, err = strconv.ParseInt(pageStr, 10, 64)
+		if err != nil || page < 1 {
+			return ErrBadReqeust
+		}
+	}
+
+	const N = 20
+	var cnt int64
+	err = db.Get(&cnt, "SELECT COUNT(*) as cnt FROM message WHERE channel_id = ?", chID)
+	if err != nil {
+		return err
+	}
+	maxPage := int64(cnt+N-1) / N
+	if maxPage == 0 {
+		maxPage = 1
+	}
+	if page > maxPage {
+		return ErrBadReqeust
+	}
+
+	response := make([]map[string]interface{}, 0)
+	rows, err := db.Query("SELECT * FROM message m inner join user u on u.id = m.user_id WHERE channel_id = ? ORDER BY m.id DESC LIMIT ? OFFSET ?", chID, N, (page-1)*N)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var m Message
+		var u User
+		if err = rows.Scan(&m.ID, &m.ChannelID, &m.UserID, &m.Content, &m.CreatedAt, &u.Name, &u.DisplayName, &u.AvatarIcon); err != nil {
+			return err
+		}
+		r := make(map[string]interface{})
+		r["id"] = m.ID
+		r["user"] = u
+		r["date"] = m.CreatedAt.Format("2006/01/02 15:04:05")
+		r["content"] = m.Content
+		response = append(response, r)
+	}
+
+	mjson := make([]map[string]interface{}, 0)
+	size := len(response)
+	for i, _ := range response {
+		mjson = append(mjson, response[size-i-1])
+	}
+
+	channels := []ChannelInfo{}
+	err = db.Select(&channels, "SELECT * FROM channel ORDER BY id")
+	if err != nil {
+		return err
+	}
+
+	return c.Render(http.StatusOK, "history", map[string]interface{}{
+		"ChannelID": chID,
+		"Channels":  channels,
+		"Messages":  mjson,
+		"MaxPage":   maxPage,
+		"Page":      page,
+		"User":      user,
+	})
+}
+
 func getHistory(c echo.Context) error {
 	chID, err := strconv.ParseInt(c.Param("channel_id"), 10, 64)
 	if err != nil || chID <= 0 {
@@ -630,7 +708,7 @@ func main() {
 	e.GET("/message", newGetMessage)
 	e.POST("/message", postMessage)
 	e.GET("/fetch", fetchUnread)
-	e.GET("/history/:channel_id", getHistory)
+	e.GET("/history/:channel_id", newGetHistory)
 
 	e.GET("/profile/:user_name", getProfile)
 	e.POST("/profile", postProfile)
